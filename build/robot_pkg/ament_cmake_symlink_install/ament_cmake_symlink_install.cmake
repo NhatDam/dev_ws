@@ -310,6 +310,9 @@ message(STATUS "Execute custom install script")
 
 # begin of custom install code
 
+# install(DIRECTORY "launch" "DESTINATION" "share/robot_pkg")
+ament_cmake_symlink_install_directory("/home/tom/AGV/dev_ws/src/robot_pkg" DIRECTORY "launch" "DESTINATION" "share/robot_pkg")
+
 # install(FILES "/home/tom/AGV/dev_ws/build/robot_pkg/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/robot_pkg" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")
 ament_cmake_symlink_install_files("/home/tom/AGV/dev_ws/src/robot_pkg" FILES "/home/tom/AGV/dev_ws/build/robot_pkg/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/robot_pkg" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")
 
