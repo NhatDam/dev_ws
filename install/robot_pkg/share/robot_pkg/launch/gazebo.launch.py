@@ -1,37 +1,59 @@
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import DeclareLaunchArgument
+import xacro
 
 def generate_launch_description():
-    pkg_share = get_package_share_directory('robot_pkg')
-    urdf_file = os.path.join(pkg_share, 'model', 'AGV', 'urdf', 'AGV.urdf')
-    world_file = os.path.join(pkg_share, 'model', 'AGV', 'worlds', 'empty.world')
-    print(f"URDF file: {urdf_file}")
-    print(f"World file: {world_file}")
+    
+    # Check if we're told to use sim time
+    use_sim_time = LaunchConfiguration('use_sim_time')
+
+    # Process the URDF file
+    pkg_path = os.path.join(get_package_share_directory('robot_pkg'))
+    xacro_file = os.path.join(pkg_path,'model','robot.urdf.xacro')
+    robot_description_config = xacro.process_file(xacro_file)
+    
+    # Create a robot_state_publisher node
+    params = {'robot_description': robot_description_config.toxml(), 'use_sim_time': use_sim_time}
+    node_robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[params]
+    )
     
     return LaunchDescription([
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
-            launch_arguments={'world': world_file}.items(),
-        ),
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            output='screen',
-            parameters=[{'robot_description': open(urdf_file).read()}]
-        ),
-        Node(
-            package='gazebo_ros',
-            executable='spawn_entity.py',
-            arguments=['-entity', 'AGV', '-file', urdf_file],
-            output='screen'
-        )
-        
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='false',
+            description='Use sim time if true'),
+
+        node_robot_state_publisher
     ])
+
+    # return LaunchDescription([
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource([os.path.join(
+    #             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
+    #         launch_arguments={'world': world_file}.items(),
+    #     ),
+    #     Node(
+    #         package='robot_state_publisher',
+    #         executable='robot_state_publisher',
+    #         output='screen',
+    #         parameters=[{'robot_description': open(urdf_file).read()}]
+    #     ),
+    #     Node(
+    #         package='gazebo_ros',
+    #         executable='spawn_entity.py',
+    #         arguments=['-entity', 'AGV', '-file', urdf_file],
+    #         output='screen'
+    #     )
+    # ])
 
 if __name__ == '__main__':
     generate_launch_description()
